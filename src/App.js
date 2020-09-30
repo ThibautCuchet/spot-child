@@ -1,60 +1,58 @@
 import React, { Component } from "react";
 import logo from "./logo.svg";
 import "./App.css";
+import search from "./utils/search";
+import redirectToAuth from "./utils/redirect";
+import { getMe } from "./utils/spotify";
+import { getToken, getRefreshToken } from "./utils/token";
+import { checkUser } from "./utils/databse";
 
-export const authEndpoint = "https://accounts.spotify.com/authorize?";
-
-const clientId = "5854be0309ff458b88d18c7369937c0d";
 const redirectUri = "http://localhost:3006";
-const scopes = [
-  "user-read-currently-playing",
-  "user-modify-playback-state",
-  "streaming",
-  "user-read-private",
-  "playlist-read-private",
-];
-
-const hash = window.location.hash
-  .substring(1)
-  .split("&")
-  .reduce(function (initial, item) {
-    if (item) {
-      var parts = item.split("=");
-      initial[parts[0]] = decodeURIComponent(parts[1]);
-    }
-    return initial;
-  }, {});
-window.location.hash = "";
 
 class App extends Component {
   state = {};
 
   componentDidMount() {
-    let _token = hash.access_token;
-    if (_token) {
-      // Set token
-      this.setState({
-        token: _token,
-      });
-    }
+    let _code = search.code;
+    let _refresh_token = localStorage.getItem("refresh_token");
+    if (!_refresh_token && !search.code) redirectToAuth();
+
+    if (_code) getRefreshToken(_code, redirectUri);
+
+    if (_refresh_token) this.initToken(_refresh_token);
+
+    setInterval(this.getData, 10000);
   }
+
+  initToken = (refresh_token) => {
+    getToken(refresh_token, (response) => {
+      this.setState({ token: response.data.access_token }, this.loadUser);
+    });
+  };
+
+  loadUser = () => {
+    getMe((response) => {
+      let user = response.data;
+      this.setState({ user: user.display_name });
+      checkUser(user.id, user.email, user.display_name, (profile) => {
+        this.setState({ profile });
+      });
+    }, this.state.token);
+  };
 
   render() {
     return (
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          {!this.state.token && (
-            <a
-              className="btn btn--loginApp-link"
-              href={`${authEndpoint}client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes.join(
-                "%20"
-              )}&response_type=token&show_dialog=true`}
-            >
-              Login to Spotify
-            </a>
+          {this.state.token && this.state.user && (
+            <div>You are logged, hi {this.state.user}</div>
           )}
-          {this.state.token && <div>You are logged</div>}
+          <div>
+            {this.state.profile && this.state.profile.access
+              ? "You can use this app"
+              : "Ask Admin an access"}
+          </div>
         </header>
       </div>
     );
