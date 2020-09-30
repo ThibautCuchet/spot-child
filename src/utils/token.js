@@ -13,8 +13,7 @@ export const getRefreshToken = (code, redirect_uri) => {
       redirect_uri,
     }),
     headers: {
-      Authorization:
-        "Basic NTg1NGJlMDMwOWZmNDU4Yjg4ZDE4YzczNjk5MzdjMGQ6OThjMzlhMjM3YzdmNDkxNzk3NzFhMGNmMjQzYjZmYjE=",
+      Authorization: `Basic ${process.env.APP_TOKEN}`,
       "content-type": "application/x-www-form-urlencoded;charset=utf-8",
     },
   })
@@ -36,8 +35,7 @@ export const getToken = (refresh_token, callback) => {
       refresh_token,
     }),
     headers: {
-      Authorization:
-        "Basic NTg1NGJlMDMwOWZmNDU4Yjg4ZDE4YzczNjk5MzdjMGQ6OThjMzlhMjM3YzdmNDkxNzk3NzFhMGNmMjQzYjZmYjE=",
+      Authorization: `Basic ${process.env.APP_TOKEN}`,
       "content-type": "application/x-www-form-urlencoded;charset=utf-8",
     },
   })
